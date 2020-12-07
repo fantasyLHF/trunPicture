@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .title {
+            height: 40px;
+            width: 300px;
+            text-align: center;
+            line-height: 40px;
+            margin: 0 auto;
+        }
+
+        .title input {
+            height: 20px;
+            width: 20px;
+        }
+
+        .box {
+            margin: 0 auto;
+            background-color: gray;
+            position: relative;
+        }
+
+
+
+        .litDiv {
+            height: 100px;
+            width: 100px;
+            border: 1px solid black;
+            box-sizing: border-box;
+            background-color: pink;
+            position: absolute;
+            transition: transform 1.5s;
+            /* transition: background-image 2s; */
+            /* z-index: -1; */
+            /* pointer-events: none; */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">
+        js记忆翻牌小游戏
+        <select name="" id="">
+            <option value="2">2*2</option>
+            <option value="4" selected>4*4</option>
+            <option value="6">6*6</option>
+        </select>
+        <button>重新开始</button>
+    </div>
+    <script>
+        //创建游戏对象
+        function Game(size) {
+            //盒子几乘几
+            this.size = size;
+            //图片数据
+            this.data = [];
+            for (var i = 1; i <= 20; i++) {
+                this.data.push(i);
+            }
+            //初始化
+            this.init();
+            //点中个数
+            this.mark = {
+                count: 0,
+                first: -1
+            };
+            //定时器
+            this.timer = []
+            //计数器
+            this.count = 0;
+            //开始事件
+            this.startTime;
+            //结束事件
+            this.endTime;
+        }
+        //游戏初始化
+        Game.prototype.init = function () {
+            //创建盒子
+            this.createBox();
+            //创建图片
+            this.createlitDiv();
+        }
+        //创建盒子
+        Game.prototype.createBox = function () {
+            var box = document.createElement("div");
+            box.style.width = this.size * 100 + "px";
+            box.style.height = this.size * 100 + "px";
+            box.className = "box"
+            document.body.insertBefore(box, document.querySelector("script"))
+        }
+        //生成图片
+        Game.prototype.createlitDiv = function () {
+            //随机生成图片
+            var num = this.size * this.size / 2;
+            var arr = []
+            for (var i = 0; i < num; i++) {
+                var random = parseInt(Math.random() * this.data.length);
+                arr.push(this.data[random]);
+                arr.push(this.data[random]);
+                this.data.splice(random, 1);
+            }
+            //创建div
+            var box = document.querySelector(".box");
+            for (var x = 0; x < this.size; x++) {
+                for (var y = 0; y < this.size; y++) {
+                    //随机数
+                    var ran = parseInt(Math.random() * arr.length);
+                    var litDiv = document.createElement("div");
+                    litDiv.className = "litDiv";
+                    //图片号
+                    var core = arr[ran];
+                    arr.splice(ran, 1);
+                    litDiv.setAttribute("data-core", core);
+                    // litDiv.style.background = "url(img/" + core + ".png) center center";
+                    litDiv.style.left = x * 100 + "px";
+                    litDiv.style.top = y * 100 + "px";
+                    (function (n) {
+                        litDiv.onclick = function () {
+                            if (game.count == 0) {
+                                game.startTime = (new Date()).getTime();
+                            }
+                            game.count++;
+                            //只能点击一次,排他实现
+                            var lits = document.querySelectorAll(".litDiv");
+                            for (var j = 0; j < lits.length; j++) {
+                                if (!lits[j].getAttribute("data-true")) {
+                                    lits[j].style.pointerEvents = "visible"
+                                }
+                            }
+                            this.style.pointerEvents = "none"
+                            // this.style.transform = "rotateY(180deg)"
+                            var num = this.getAttribute("data-core");
+
+                            // this.style.transition = "background-img 0.5s";
+
+                            game.mark.count++;
+                            if (game.mark.count == 2) {
+                                game.mark.count = 0;
+                            }
+
+                            if (game.mark.code == num) {
+                                //清除定时器
+                                var len = game.timer.length
+                                for (var k = 0; k < len; k++) {
+                                    clearTimeout(game.timer[0])
+                                    game.timer.splice(0, 1);
+                                }
+                                var divs = document.querySelectorAll(".litDiv[data-core='" + num + "']");
+                                divs[0].style.background = "url(img/" + num + ".png) center center"
+                                divs[0].setAttribute("data-true", true);
+                                divs[0].style.pointerEvents = "none"
+                                divs[1].style.background = "url(img/" + num + ".png) center center"
+                                divs[1].setAttribute("data-true", true);
+                                divs[1].style.pointerEvents = "none"
+                                //判断游戏是否结束
+                                var flag = true;
+                                for (var s = 0; s < lits.length; s++) {
+                                    if (!lits[s].getAttribute("data-true")) {
+                                        flag = false
+                                    }
+                                }
+                                if (flag) {
+                                    game.endTime = (new Date()).getTime();
+                                    var waste = game.endTime - game.startTime;
+                                    var minute = parseInt(waste / 1000 / 60);
+                                    var second = parseInt(waste / 1000 % 60);
+                                    var Msecond = waste % 1000
+                                    setTimeout(function () {
+                                        alert("gameOver,你共用了" + game.count + "步,用时" + minute + "分钟" + second + "秒" + Msecond + "毫秒")
+
+                                    }, 300)
+                                }
+                                return;
+                            } else {
+                                this.style.background = "url(img/" + num + ".png) center center";
+                                this.style.transform = "rotateY(" + (360 * n) + "deg)"
+                                game.mark.code = num;
+                                game.timer.push(setTimeout(function () { this.style.backgroundImage = ""; }.bind(this), 500));
+                                this.style.backgroundColor = "pink"
+
+                            }
+                            n++;
+                        }
+                    })(1)
+
+                    box.appendChild(litDiv)
+                }
+            }
+            var litDiv = document.createElement("div");
+
+        }
+        var game = new Game(4);
+        document.querySelector("select").onchange = function () {
+            if (document.querySelector(".box")) {
+                document.querySelector(".box").remove()
+
+            }
+            game = new Game(this.value);
+        }
+        document.querySelector("button").onclick = function () {
+            history.go(0);
+        }
+    </script>
+</body>
+
+</html>
